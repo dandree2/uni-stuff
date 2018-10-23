@@ -1,3 +1,5 @@
+The compilation of most files is done either in XCode or Visual Studio. Sometimes I use g++, gcc or gdb directly from the terminal, so you can try that, too if you haven't already!
+
 DISCLAIMER: These files are only for studying and teaching purposes!
 They are not intendet to be a direct example of good coding practices 
 or C++ expert usage.
