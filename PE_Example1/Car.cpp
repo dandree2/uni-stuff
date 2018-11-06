@@ -62,6 +62,23 @@ Car& Car::operator=(const Car& other_car) {
 	return *this;
 }
 
+/* Car's implementation of the Move assignment operator. */
+Car& Car::operator=(Car && other_car) {
+
+	std::cout << "Car's move assignment operator is called!" << std::endl;
+	if (this != &other_car)
+	{
+		this->m_engineVolume = other_car.GetEngineVolume();
+		this->m_year = other_car.GetYear();
+
+		/* Do we need to do that? */
+		other_car.SetEngineVolume(0.0f);
+		other_car.SetYear(0);
+	}
+
+	return *this;
+}
+
 /* Car's destructor implementation. */
 Car::~Car() {
 	std::cout << "Car's destructor called!" << std::endl;

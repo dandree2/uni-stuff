@@ -21,6 +21,7 @@
 #include <iostream>
 #include <memory> //For the usage of shared pointers.
 #include <vector> //For the usage of vector - dynamic array representation.
+#include <algorithm>
 
 #include"Car.h"
 
@@ -60,13 +61,56 @@ int main()
 	/* * is because we need a value behind a pointer;
 	   dynamic_cast will do the trick;
 	   Car * is the pointer to the type of the wanted object/class
-	   dyn_vehicle is the is a pointer to Vehicle, intantiated as a Car earlier.
+	   dyn_vehicle is the is a pointer to Vehicle, instantiated as a Car earlier.
 	*/
 	vector_of_cars.push_back(*(dynamic_cast<Car*>(dyn_vehicle))); //Be cautios when you do this. It's dirty!
 
-	/* Let's see what we have in the vector. 
+	/* PRINTING ELEMENTS OF A VECTOR */
+
+	/* Let's see what we have in the vector.
 	   Remember the auto variables?
 	   */
+	for (const auto& car : vector_of_cars) {
+		PrintData<Car>(car);
+	}
+
+	/* Printing the elements, using an iterator.
+	   Why not const auto? Why not a reference.
+	   Why ++it, instead of it++
+	*/
+	for (auto it = vector_of_cars.begin(); it != vector_of_cars.end(); ++it) {
+		PrintData<Car>(*it); //Why do we need *
+	}
+
+	/* Printing the cars related to a certain criterion. */
+	/* This is a bad example for usage of the lambda - it's too long for a one-liner. */
+	/* Usage of static_cast is also only for demonstration purposes. */
+	/* Please take a look at the enum class more carefully. */
+	std::for_each(vector_of_cars.begin(), vector_of_cars.end(),
+		[](const auto& p_car) { if (static_cast<Car::Classification>(p_car.GetYear()) < Car::Classification::old_car) 
+			PrintData<Car>(p_car); });
+
+	/* Creating a lambda variable, using auto. */
+	/* This will return "true" if the car is older than "old_car" and "false" if not! */
+	auto lambda = [](const auto& p_car)->bool {
+		if (static_cast<Car::Classification>(p_car.GetYear()) < Car::Classification::old_car)
+			return true;
+		else return false;
+	};
+
+	/* REMOVING ELEMENTS FROM A VECTOR, BASED ON SOME CRITERIA. */
+
+	/* The lambda will mark if the car is older then some year. */
+	/* The remove_if will move all elements, where lambda will return "true" to the end of the vector. */
+	/* remove_if will return an iterator to the first element that's to-be-deleted. */
+	/* erase will receive the remove_if iterator and the iterator, marking the end of the vector. */
+	/* It will delete all elements between them. */
+	/* Try "=delete" the move assignment operator of the car - see what happens. Why? */
+	vector_of_cars.erase(std::remove_if(vector_of_cars.begin(), vector_of_cars.end(), lambda ), vector_of_cars.end());
+
+	std::cout << "----------------" << std::endl;
+
+	/* Print the array after removal. */
 	for (const auto& car : vector_of_cars) {
 		PrintData<Car>(car);
 	}

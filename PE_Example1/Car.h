@@ -24,9 +24,11 @@ public:
 	/* List of constructors */
 	Car(); //Remember why we use "delete"!
 	Car(const Car&);
+	Car(Car&&) = delete;
 
 	/* Operator overloads */
 	Car& operator=(const Car&);
+	Car& operator=(Car &&);
 
 	/* Accessors and mutators - should they be here or in the Base class? */
 	/* Do we want to generalize their usage? */
@@ -38,6 +40,13 @@ public:
 
 	/* Destructor */
 	~Car();
+
+	/* Example for an enum class. */
+	enum class Classification : uint16_t {
+		old_car = 2005,
+		brand_new = 2018
+	};
+
 private:
 	uint16_t m_year;
 	float m_engineVolume;
