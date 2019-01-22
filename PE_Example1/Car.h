@@ -24,7 +24,7 @@ public:
 	/* List of constructors */
 	Car(); //Remember why we use "delete"!
 	Car(const Car&);
-	Car(Car&&) = delete;
+	Car(Car&&) = delete; //test
 
 	/* Operator overloads */
 	Car& operator=(const Car&);
