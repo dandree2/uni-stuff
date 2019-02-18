@@ -2,10 +2,10 @@ The compilation of most files is done either in XCode or Visual Studio. Sometime
 
 DISCLAIMER: These files are only for studying and teaching purposes!
 They are not intendet to be a direct example of good coding practices 
-or C++ expert usage.
+or C/C++ expert usage.
 
 
-Copyright 2018 Desislav Andreev: desislav.andreev@gmail.com
+Copyright 2019 Desislav Andreev: desislav.andreev@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
