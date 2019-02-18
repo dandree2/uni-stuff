@@ -1,4 +1,3 @@
-#include"Vehicle.h"
 // DISCLAIMER: These files are only for studying and teaching purposes!
 // They are not intendet to be a direct example of good coding practices 
 // or C++ expert usage.
@@ -17,6 +16,8 @@
 	DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 	ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+#include"Vehicle.h"
 
 /* Definition of class Car */
 class Car : public Vehicle {
