@@ -33,13 +33,6 @@
 #define FIFO_NAME           "metadata_fifo"
 #define RESPONSE_LEN        ((size_t) 30)
 
-typedef int  int32_t;
-typedef long int64_t;
-
-typedef unsigned char byte;
-typedef unsigned int  uint32_t;
-typedef unsigned long uint64_t;
-
 typedef enum Sizes
 {
     TAG_SIZE    = 3,
@@ -60,28 +53,36 @@ typedef enum Offsets
     eMaxOffset    = 0
 } eOffsets;
 
+typedef enum Response
+{
+    NOT_REQUIRED = 0,
+    REQUIRED     = 1
+} eResponses;
+
 typedef struct Message
 {
-    byte flag;
-    byte msg_buf[eMaxSize];
+    eResponses flag;
+    char       msg_buf[eMaxSize];
 } sPackage;
 
 /* Define function prototypes */
-byte *getTitle(const uint32_t);
-byte *getArtist(const uint32_t);
-byte *getAlbum(const uint32_t);
-byte *getYear(const uint32_t);
+char *getTitle(const int);
+char *getArtist(const int);
+char *getAlbum(const int);
+char *getYear(const int);
 
 /* Define arrays in the Data segment */
-static byte buffer[eMaxSize]          = {0};
-static byte mp3_data[METADATA_SIZE]   = {0};
-static byte reponse_buf[RESPONSE_LEN] = {0};
-static const byte response_msg[]      = "Information printed!\n";
+static char buffer[eMaxSize]          = {0};
+static char mp3_data[METADATA_SIZE]   = {0};
+static char reponse_buf[RESPONSE_LEN] = {0};
+static const char response_msg[]      = "Information printed!\n";
 
 /* TODO: Split to additional functions */
-int32_t main(int argc, char **argv) //Must remain int
+int main(int argc, char **argv) //Must remain int
 {   
     pid_t childId = 0;
+
+    int named_pipe_fd = 0;
 
     /* Create the FIFO (named pipe) - it will be executed
     for child and parent - the first one, who executes this
@@ -94,42 +95,53 @@ int32_t main(int argc, char **argv) //Must remain int
 
     if (0 == childId)
     {
-        /* Creates a named pipe */
-        int32_t named_pipe = open(FIFO_NAME, O_RDWR);
-
         /* Initialize the message var */
         sPackage message = {0};
 
-        /* Endless loop */
-        for(;;)
-        {
-            /* TODO: Check the returned values */
-            (void) read(named_pipe, &message, sizeof(message));
-            (void) strcat(mp3_data, message.msg_buf);
+        /* Creates a named pipe */
+        named_pipe_fd = open(FIFO_NAME, O_RDWR);
 
-            if (1 == message.flag)
+        if (0 <= named_pipe_fd)
+        {
+            /* Endless loop */
+            for(;;)
             {
-                /* TODO: Check read's output */
-                (void) printf("\n %s \n", mp3_data);
-                (void) write(named_pipe, response_msg, sizeof(response_msg));
-                break;
+                /* TODO: Check the returned values */
+                (void) read(named_pipe_fd, &message, sizeof(message));
+
+                (void) strcat(mp3_data, " ");
+                (void) strcat(mp3_data, message.msg_buf);
+
+                if (REQUIRED == message.flag)
+                {
+                    (void) printf("Child received: %s\n", mp3_data);
+                    
+                    /* TODO: Check read's output */
+                    (void) write(named_pipe_fd, response_msg, sizeof(response_msg));
+                    // Makes sure the pipe remains open prior deletion.
+                    //sleep(1);
+                                       // Disables the child;
+                    (void) close(named_pipe_fd);
+                    break;
+                }
             }
         }
-
-        /* What happens to the pipe? */
-        close(named_pipe);
+        else
+        {
+            (void) printf("Child cannot open the pipe!\n");
+        }
     }
     else if (0 < childId)
     {
         if (argc >= 1)
         {
-            int32_t fd = open(argv[1], O_RDONLY);
+            int fd = open(argv[1], O_RDONLY);
 
             if (0 <= fd)
             {
-                uint32_t iterator   = 0;
-                int32_t  named_pipe = open(FIFO_NAME, O_RDWR);
-                sPackage message    = {0};
+                size_t iterator  = 0;
+                named_pipe_fd    = open(FIFO_NAME, O_RDWR);
+                sPackage message = {0};
 
                 for (iterator = 2; iterator < argc; iterator++)
                 {
@@ -152,32 +164,33 @@ int32_t main(int argc, char **argv) //Must remain int
                     }
                     else
                     {
-                        (void) printf("Parameter %d is unknown\n", iterator);
+                        (void) printf("Parameter %d is unknown\n", (int)iterator);
                     }
 
                     /* Send the content. */
                     /* TODO: Check the returned value. */
-                    (void) write(named_pipe, &message, sizeof(message));
+                    message.flag = NOT_REQUIRED;
+                    (void) write(named_pipe_fd, &message, sizeof(message));
 
                     // Reinitialize the message to 0.
                     memset(&message, 0, sizeof(message));
+
+                    // Makes sure duplex communication appears on different systems.
+                    sleep(1);
                 }
 
-                message.flag = 1;
+                message.flag = REQUIRED;
+                (void) write(named_pipe_fd, &message, sizeof(message));
                 memset(message.msg_buf, 0, sizeof(eMaxSize));
-
-                /* Send the content. */
-                /* TODO: Check the returned value. */
-                (void) write(named_pipe, &message, sizeof(message));
 
                 /* Receive the final response. */
                 /* TODO: Check the returned value. */
-                (void) read(named_pipe, reponse_buf, sizeof(reponse_buf));
-                printf("\n %s \n", reponse_buf);
+                (void) read(named_pipe_fd, reponse_buf, sizeof(reponse_buf));
+                (void) printf("Response in parent: %s\n", response_msg);
 
+                sleep(1);
                 /* TODO: Check the returned value. */
                 (void) close(fd);
-                (void) close(named_pipe);
             }
         }
         else
@@ -187,7 +200,7 @@ int32_t main(int argc, char **argv) //Must remain int
     }
     else
     {
-        printf("Fork failed!");
+        (void) printf("Fork failed!");
     }
 
     /* Why do we do that? */
@@ -197,13 +210,13 @@ int32_t main(int argc, char **argv) //Must remain int
 }
 
 /* TODO: Check funtions' returned values. */
-byte *getTitle(const uint32_t fd_param)
+char *getTitle(const int fd_param)
 {
-    // Get the offset byte.
+    // Get the offset char.
     (void) lseek(fd_param, TITLE_OFFSET, SEEK_END);
 
     // Read the data and put into buffer.
-    (void) read(fd_param, buffer, sizeof(byte) * TITLE_SIZE);
+    (void) read(fd_param, buffer, sizeof(char) * TITLE_SIZE);
 
     // Remove the white-space characters.
     (void) strtok(buffer, " ");
@@ -211,13 +224,13 @@ byte *getTitle(const uint32_t fd_param)
     return buffer;
 }
 
-byte *getArtist(const uint32_t fd_param)
+char *getArtist(const int fd_param)
 {
-    // Get the offset byte.
+    // Get the offset char.
     (void) lseek(fd_param, ARTIST_OFFSET, SEEK_END);
 
     // Read the data and put into buffer.
-    (void) read(fd_param, buffer, sizeof(byte) * ARTIST_SIZE);
+    (void) read(fd_param, buffer, sizeof(char) * ARTIST_SIZE);
 
     // Remove the white-space characters.
     (void) strtok(buffer, " ");
@@ -225,13 +238,13 @@ byte *getArtist(const uint32_t fd_param)
     return buffer;
 }
 
-byte *getAlbum(const uint32_t fd_param)
+char *getAlbum(const int fd_param)
 {
-    // Get the offset byte.
+    // Get the offset char.
     (void) lseek(fd_param, ALBUM_OFFSET, SEEK_END);
 
     // Read the data and put into buffer.
-    (void) read(fd_param, buffer, sizeof(byte) * ALBUM_SIZE);
+    (void) read(fd_param, buffer, sizeof(char) * ALBUM_SIZE);
 
     // Remove the white-space characters.
     (void) strtok(buffer, " ");
@@ -239,13 +252,13 @@ byte *getAlbum(const uint32_t fd_param)
     return buffer;
 }
 
-byte *getYear(const uint32_t fd_param)
+char *getYear(const int fd_param)
 {
-    // Get the offset byte.
+    // Get the offset char.
     (void) lseek(fd_param, YEAR_OFFSET, SEEK_END);
 
     // Read the data and put into buffer.
-    (void) read(fd_param, buffer, sizeof(byte) * YEAR_SIZE);
+    (void) read(fd_param, buffer, sizeof(char) * YEAR_SIZE);
 
     // Remove the white-space characters.
     (void) strtok(buffer, " ");
