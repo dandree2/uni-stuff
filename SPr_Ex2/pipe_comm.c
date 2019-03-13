@@ -22,10 +22,10 @@
 #include <unistd.h>
 
 /* Define valid parameters */
-#define TITLE_STRING  "title"
-#define ARTIST_STRING "artist"
-#define ALBUM_STRING  "album"
-#define YEAR_STRING   "year"
+#define TITLE_STRING   "title"
+#define ARTIST_STRING  "artist"
+#define ALBUM_STRING   "album"
+#define YEAR_STRING    "year"
 
 /* Define basic sizes */
 #define NMR_METADATA_FIELDS ((size_t) 5)
@@ -62,6 +62,7 @@ typedef enum Response
 typedef struct Message
 {
     eResponses flag;
+    size_t     expected_msg_count;
     char       msg_buf[eMaxSize];
 } sPackage;
 
@@ -103,26 +104,43 @@ int main(int argc, char **argv) //Must remain int
 
         if (0 <= named_pipe_fd)
         {
-            /* Endless loop */
+            sleep(1);
+            size_t iterator = 0;
+
+            // Should be endless loop!
             for(;;)
             {
-                /* TODO: Check the returned values */
-                (void) read(named_pipe_fd, &message, sizeof(message));
+                size_t bytes_recv = read(named_pipe_fd, &message, sizeof(message));
 
-                (void) strcat(mp3_data, " ");
-                (void) strcat(mp3_data, message.msg_buf);
-
-                if (REQUIRED == message.flag)
+                if(bytes_recv > 0)
                 {
-                    (void) printf("Child received: %s\n", mp3_data);
-                    
-                    /* TODO: Check read's output */
-                    (void) write(named_pipe_fd, response_msg, sizeof(response_msg));
-                    // Makes sure the pipe remains open prior deletion.
-                    //sleep(1);
-                                       // Disables the child;
-                    (void) close(named_pipe_fd);
-                    break;
+                    if(message.expected_msg_count > 0)
+                    {
+                        (void) strcat(mp3_data, " ");
+                        (void) strcat(mp3_data, message.msg_buf);
+                    }
+                    else
+                    {
+                        (void) printf("Child received: %s\n", mp3_data);
+
+                        if (REQUIRED == message.flag)
+                        {
+                            /* TODO: Check read's output */
+                            (void) write(named_pipe_fd, response_msg, sizeof(response_msg));
+
+                            // Disables the child's pipe end;
+                            (void) close(named_pipe_fd);
+                            break;
+                        }
+
+                        // We don't expect any more messages.
+                        // We use this as a condition to exit the child process.
+                        break;
+                    }
+                }
+                else
+                {
+                    // Do nothing.
                 }
             }
         }
@@ -170,6 +188,9 @@ int main(int argc, char **argv) //Must remain int
                     /* Send the content. */
                     /* TODO: Check the returned value. */
                     message.flag = NOT_REQUIRED;
+
+                    // Ignoring the first two cmd arguments;
+                    message.expected_msg_count = argc-2;
                     (void) write(named_pipe_fd, &message, sizeof(message));
 
                     // Reinitialize the message to 0.
@@ -180,17 +201,20 @@ int main(int argc, char **argv) //Must remain int
                 }
 
                 message.flag = REQUIRED;
+                message.expected_msg_count = 0;
                 (void) write(named_pipe_fd, &message, sizeof(message));
                 memset(message.msg_buf, 0, sizeof(eMaxSize));
 
                 /* Receive the final response. */
                 /* TODO: Check the returned value. */
                 (void) read(named_pipe_fd, reponse_buf, sizeof(reponse_buf));
-                (void) printf("Response in parent: %s\n", response_msg);
 
                 sleep(1);
+                (void) printf("Response in parent: %s", response_msg);
+
                 /* TODO: Check the returned value. */
                 (void) close(fd);
+                (void) close(named_pipe_fd);
             }
         }
         else
