@@ -1,0 +1,14 @@
+﻿I. Изтеглете и разархивирайте LWJGL3 от moodle.
+ - Създайте проект в Eclipse (Java 1-8).
+ - Направете Drag & Drop на HelloWorld.java и KeyboardHandler.java в папката src на проекта. Натиснете “ОК”.
+II.1 Преместете папките на библиотеката (doc, jar, native) в папката на проекта си. 
+II.2 Направете Refresh на проекта.
+III. Отворете Properties -> Java Build Path -> Libraries и кликнете на Add JARs...
+IV. Изберете jar/lwjgl.jar
+V.1 lwjgl.jar ще бъде заредена в списъка с библиотеките ви. 
+V.2 Отворете под-компонентите ѝ и изберете Native Library Location. Кликнете два пъти.
+VI. В новоотворения прозорец кликнете на Workspace... и изберете native директория.
+VII. Стартирайте приложението (Run As -> Java Application). 
+
+*При Linux (Ubuntu) и MAC OS е възможно да се появят грешки, ако не е активиран -XstartOnFirstThread.
+VIII. За активацията му: Отворете Run Configuration -> Arguments -> VM Arguments и добавете -XstartOnFirstThread. Стартирайте отново.
