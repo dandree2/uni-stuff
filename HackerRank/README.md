@@ -2,7 +2,7 @@ The compilation of most files is done either in XCode or Visual Studio. Sometime
 
 DISCLAIMER: These files are only for studying and teaching purposes!
 They are not intendet to be a direct example of good coding practices 
-or C/C++ expert usage. Please, bear in mind, that HackerRank provides
+or C++ expert usage. Please, bear in mind, that HackerRank provides
 a preset template for all tasks, so interfaces are not always an example
 of best decisions, when speaking about encapsulation of high-quality code.
 
